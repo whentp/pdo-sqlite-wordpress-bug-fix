@@ -414,6 +414,10 @@ HTML;
 	*	
 	*/
 	private function prepareQuery(){
+		// the following 2 lines are added by whentp.
+		$this->preparedQuery = preg_replace('/DATE_SUB\(\s*NOW\(\),\s*INTERVAL\s*(\d+)\s*DAY\s*\)/i', 'date(\'now\', \'-${1} days\')', $this->preparedQuery);
+		$this->preparedQuery = preg_replace('/,\s*FALSE\s*\)/i', ', 0)', $this->preparedQuery);
+
 		$this->queries[] = "Prepare:\t". $this->preparedQuery;
 		do {
 			$this->statement = $this->pdo->prepare($this->preparedQuery);
@@ -427,7 +431,7 @@ HTML;
 		} while ($reason == 17);
 		
 		if ($reason > 0){
-			$message = "Problem preparing the PDO SQL Statement.  Error was ".$reasons[2];
+			$message = "Problem preparing the PDO SQL Statement.  Error was ".$reasons[2] . ' :: ' . $this->preparedQuery;
 			$this->setError(__LINE__, __FUNCTION__, $message);
 			return false;
 		}
@@ -446,7 +450,9 @@ HTML;
 		global $wpdb;
 		if (!is_object($statement)) return;
 		if (count($this->extractedVariables) > 0){
-			$this->queries[] = "Executing:\t ".print_r($this->extractedVariables, true);
+			// commented by whentp $this->queries[] = "Executing:\t ".print_r($this->extractedVariables, true);
+			$this->queries[] = "Executing:\t (nodata)"; // added by whentp
+
 			do {
 				$result = $statement->execute($this->extractedVariables);
 				if (!$result){

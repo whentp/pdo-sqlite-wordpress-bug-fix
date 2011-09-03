@@ -114,7 +114,7 @@ class pdo_db extends wpdb {
 	 *	@return	string	escaped variable
 	 */
 	function escape($string) {
-		return addslashes($string);
+		return parent::escape($string); //return addslashes($string);
 	}
 	
 	/**
@@ -230,31 +230,41 @@ class pdo_db extends wpdb {
 	/**
 	 * stubs out _real escape too
 	 */
-	
-	function _real_escape($string) {
-		return addslashes( $string );
+
+	function _real_escape($data) {
+		if ( is_array($data) ) {
+			foreach ( (array) $data as $k => $v ) {
+				if ( is_array($v) )
+					$data[$k] = $this->escape( $v );
+				else
+					$data[$k] = addslashes( $v );
+			}
+		} else {
+			$data = addslashes( $data );
+		}
+		return $data;
 	}
-	
+
 	function has_cap($db_cap){
 		switch ($this->dbType){
-			case 'sqlite':
-				switch ( strtolower( $db_cap ) ){
-					case 'collation' :    // @since 2.5.0
-					case 'group_concat' : // @since 2.7
-						return false;
-					case 'subqueries' :   // @since 2.7
-						return true;
-						break;
-					default:
-						return false;
-				}
+		case 'sqlite':
+			switch ( strtolower( $db_cap ) ){
+			case 'collation' :    // @since 2.5.0
+			case 'group_concat' : // @since 2.7
+				return false;
+			case 'subqueries' :   // @since 2.7
+				return true;
+				break;
+			default:
+				return false;
+			}
 			break;
 			default:
 				return parent::has_cap($db_cap);
 		}
-		
+
 	}
-	
+
 	/**
 	 * Print SQL/DB error.
 	 *
@@ -272,7 +282,7 @@ class pdo_db extends wpdb {
 			$e = $pdo->errorInfo();
 			$str = $e[2];
 		}
-		
+
 		$EZSQL_ERROR[] = array ('query' => $this->last_query, 'error_str' => $str);
 
 		if ( $this->suppress_errors )
@@ -303,9 +313,9 @@ class pdo_db extends wpdb {
 
 		// If there is an error then take note of it
 		print "<div id='error'>
-		<p class='wpdberror'><strong>WordPress database error:</strong> [$str]<br />
-		<code>$query</code></p>
-		</div>";
+			<p class='wpdberror'><strong>WordPress database error:</strong> [$str]<br />
+			<code>$query</code></p>
+			</div>";
 	}
 }
 
